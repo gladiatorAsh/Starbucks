@@ -1,17 +1,12 @@
 var express = require('express')
-, routes = require('./routes')
-, user = require('./routes/user')
 , http = require('http')
 , path = require('path');
 
 var order = require('./routes/order')
+var orders = require('./routes/orders')
+var payment = require('./routes/payment')
 
 var app = express();
-
-// var session = require('client-sessions');
-var app = express();
-// all environments
-// configure the sessions with our application
 
 // all environments
 app.set('port', process.env.PORT || 3000);
@@ -29,18 +24,18 @@ if ('development' == app.get('env')) {
 	app.use(express.errorHandler());
 }
 
-// get
+// get request
 app.get('/orders/:id', order.getOrder);
-app.get('/orders', order.getAllOrders);
+app.get('/orders', orders.getAllOrders);
 
-// post
+// post request
 app.post('/orders', order.newOrder);
-app.post('/orders/:id/pay', order.makePayment);
+app.post('/orders/:id/pay', payment.makePayment);
 
-// put
+// put request
 app.put('/orders/:id', order.updateOrder);
 
-// delete
+// delete request
 app.del('/orders/:id', order.deleteOrder);
 
 http.createServer(app).listen(app.get('port'), function() {

@@ -17,22 +17,6 @@ var getOrder = function(req, res) {
 	});
 };
 
-var getAllOrders = function(req, res) {
-
-	Orders.find({}, function(err, orders) {
-		if (err) {
-			res.status(500).send();
-			throw err;
-		}
-
-		if (orders === undefined) {
-			res.status(404).send();
-		} else {
-			res.status(200).send(orders);
-		}
-	});
-};
-
 var newOrder = function(req, res) {
 
 	var orderDetails = req.body;
@@ -72,34 +56,6 @@ var newOrder = function(req, res) {
 			}
 		}
 	}
-};
-
-var makePayment = function(req, res) {
-
-	var orderID = req.param("id");
-	Orders.findById(orderID, function(err, order) {
-		console.log(order);
-		if (err) {
-			res.status(500).send();
-			throw err;
-		}
-
-		if (order === null) {
-			res.status(404).send();
-		} else if (order.status === "PLACED") {
-			order.message = "PAYMENT ACCEPTED";
-			order.status = "PAID";
-			order.save(function(err) {
-				if (err) {
-					res.status(500).send();
-				} else {
-					res.status(200).send(order);
-				}
-			});
-		} else {
-			res.status(412).send();
-		}
-	});
 };
 
 var updateOrder = function(req, res) {
@@ -155,8 +111,6 @@ var deleteOrder = function(req, res) {
 };
 
 exports.getOrder = getOrder;
-exports.getAllOrders = getAllOrders;
 exports.newOrder = newOrder;
-exports.makePayment = makePayment;
 exports.updateOrder = updateOrder;
 exports.deleteOrder = deleteOrder;

@@ -16,9 +16,6 @@ orderSchema.methods.updateStatus = function(status){
 	return this.status;
 };
 
-
-
-
 var Order = mongoose.model('Order', orderSchema);
 
 module.exports = Order;
