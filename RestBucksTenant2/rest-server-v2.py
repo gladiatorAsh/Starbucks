@@ -12,8 +12,8 @@ from bson.objectid import ObjectId
 app = Flask(__name__, static_url_path="")
 api = Api(app)
 auth = HTTPBasicAuth()
-client = MongoClient('localhost', 27017)
-#client = MongoClient('ec2-52-53-152-19.us-west-1.compute.amazonaws.com', 27017)
+#client = MongoClient('localhost', 27017)
+client = MongoClient('ec2-52-53-152-19.us-west-1.compute.amazonaws.com', 27017)
 db = client['restbucks']
 orders = db['orders'] 
 
@@ -92,9 +92,9 @@ class OrderListAPI(Resource):
         args=request.get_json(force=True)
         order = {
             'location': args['location'],
-            'message': args['message'],
+            'status': 'PLACED',
             'items': args['items'],
-            'status': args['status']
+            'message': 'Your order has been placed'
         }
         #orders.append(order)
         order_id = orders.insert_one(order).inserted_id
@@ -121,16 +121,18 @@ class PayOrderAPI(Resource):
     def post(self,id,pay):
         if pay!="pay":
             abort(404)
-        args=request.get_json(force=True)
-        if args['status']!="PAID":
-            abort(412) 
         order = orders.find_one({"_id": ObjectId(id)})
         if order is None:
             abort(404)
         
         if len(order) == 0:
             abort(404)
+        
+        if order['status']!="PLACED":
+            abort(412)
+       
         #args = self.reqparse.parse_args()
+        args=request.get_json(force=True)
         order['message']= 'PAYMENT ACCEPTED'
         order['status']= 'PAID'
         print "Paid"
