@@ -13,6 +13,7 @@ app = Flask(__name__, static_url_path="")
 api = Api(app)
 auth = HTTPBasicAuth()
 client = MongoClient('localhost', 27017)
+#client = MongoClient('ec2-52-53-152-19.us-west-1.compute.amazonaws.com', 27017)
 db = client['restbucks']
 orders = db['orders'] 
 
@@ -84,7 +85,8 @@ class OrderListAPI(Resource):
         super(OrderListAPI, self).__init__()
 
     def get(self):
-        return {'orders': [marshal(order, order_fields) for order in orders]}
+        allOrders = orders.find()
+        return {'orders': [marshal(order, order_fields) for order in allOrders]}
 
     def post(self):
         args=request.get_json(force=True)
@@ -102,6 +104,38 @@ class OrderListAPI(Resource):
         #order_json['_id']= (str)order_id
         print order_json
         return {'order': order_json }, 201
+
+class PayOrderAPI(Resource):
+    def __init__(self):
+        self.reqparse = reqparse.RequestParser()
+        self.reqparse.add_argument('location', type=str, location='json')
+        self.reqparse.add_argument('status', type=str, location='json')
+        self.reqparse.add_argument('message', type=str, location='json')
+        self.reqparse.add_argument('items', type=[], location='json')
+        self.reqparse.add_argument('size', type=str, location='json')
+        self.reqparse.add_argument('name', type=str, location='json')
+        self.reqparse.add_argument('milk', type=str, location='json')
+        self.reqparse.add_argument('qty', type=int, location='json')
+        super(PayOrderAPI, self).__init__()
+
+    def post(self,id,pay):
+        if pay!="pay":
+            abort(404)
+        args=request.get_json(force=True)
+        if args['status']!="PAID":
+            abort(412) 
+        order = orders.find_one({"_id": ObjectId(id)})
+        if order is None:
+            abort(404)
+        
+        if len(order) == 0:
+            abort(404)
+        #args = self.reqparse.parse_args()
+        order['message']= 'PAYMENT ACCEPTED'
+        order['status']= 'PAID'
+        print "Paid"
+        orders.save(order)
+        return {'order': marshal(order, order_fields)},201
 
 class OrderAPI(Resource):
     #decorators = [auth.login_required]
@@ -140,6 +174,7 @@ class OrderAPI(Resource):
         for k, v in args.items():
             if v is not None:
                 order[k] = v
+        orders.save(order)
         return {'order': marshal(order, order_fields)}
 
     def delete(self, id):
@@ -154,7 +189,7 @@ class OrderAPI(Resource):
 
 api.add_resource(OrderListAPI, '/orders', endpoint='orders')
 api.add_resource(OrderAPI, '/orders/<string:id>', endpoint='order')
-
+api.add_resource(PayOrderAPI, '/order/<string:id>/<string:pay>', endpoint='pay')
 
 if __name__ == '__main__':
     app.run(debug=True)
