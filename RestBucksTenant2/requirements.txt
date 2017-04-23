@@ -10,3 +10,4 @@ flask_sqlalchemy
 flask_mysql
 sqlalchemy
 pymysql
+pymongo

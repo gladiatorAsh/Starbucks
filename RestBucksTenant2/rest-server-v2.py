@@ -194,4 +194,4 @@ api.add_resource(OrderAPI, '/orders/<string:id>', endpoint='order')
 api.add_resource(PayOrderAPI, '/order/<string:id>/<string:pay>', endpoint='pay')
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run(host='0.0.0.0', debug = False)
