@@ -19,7 +19,7 @@ orders = db['orders']
 
 @auth.get_password
 def get_password(username):
-    if username == 'miguel':
+    if username == 'ashutosh':
         return 'python'
     return None
 
@@ -58,6 +58,7 @@ orders = [
 order_fields = {
     '_id': fields.String,
     'location': fields.String,
+    'amount': fields.Float,
     'status': fields.String,
     'message': fields.String,
     'items': fields.Nested({
@@ -65,8 +66,12 @@ order_fields = {
         'milk': fields.String,
         'name': fields.String,
         'qty': fields.Integer
-    })    
-    #'uri': fields.Url('task')
+    }),
+    'links': fields.Nested({
+        'get': fields.String,
+        'pay': fields.String,
+        'delete': fields.String
+    })
 }
 
 class OrderListAPI(Resource):
@@ -78,10 +83,15 @@ class OrderListAPI(Resource):
         self.reqparse.add_argument('status', type=str, location=['json', 'form'])
         self.reqparse.add_argument('message', type=str, location=['json', 'form'])
         self.reqparse.add_argument('items', type=list, location='json')
+        self.reqparse.add_argument('links', type=list, location='json')
         self.reqparse.add_argument('size', type=str, location=['json', 'form'])
         self.reqparse.add_argument('name', type=str, location=['json', 'form'])
         self.reqparse.add_argument('milk', type=str, location=['json', 'form'])
         self.reqparse.add_argument('qty', type=int, location=['json', 'form'])
+        self.reqparse.add_argument('amount', type=float, location=['json', 'form'])
+        self.reqparse.add_argument('get', type=str, location='json')
+        self.reqparse.add_argument('delete', type=str, location='json')
+        self.reqparse.add_argument('pay', type=str, location='json')
         super(OrderListAPI, self).__init__()
 
     def get(self):
@@ -94,15 +104,22 @@ class OrderListAPI(Resource):
             'location': args['location'],
             'status': 'PLACED',
             'items': args['items'],
-            'message': 'Your order has been placed'
+            'message': 'Your order has been placed',
+            'amount': args['amount'],
+            'links': [{
+                "get":"",
+                "delete":"",
+                "put":""
+            }]
         }
+
         #orders.append(order)
         order_id = orders.insert_one(order).inserted_id
         order_saved=orders.find_one({"_id":order_id})
-        print order_id
+        order_saved['links'][0]['get']='/orders/'+ str(order_id)
+        order_saved['links'][0]['pay']='/order/'+ str(order_id) + '/pay'
+        order_saved['links'][0]['delete']='/orders/'+ str(order_id)
         order_json = marshal(order_saved, order_fields)
-        #order_json['_id']= (str)order_id
-        print order_json
         return {'order': order_json }, 201
 
 class PayOrderAPI(Resource):
@@ -116,6 +133,10 @@ class PayOrderAPI(Resource):
         self.reqparse.add_argument('name', type=str, location='json')
         self.reqparse.add_argument('milk', type=str, location='json')
         self.reqparse.add_argument('qty', type=int, location='json')
+        self.reqparse.add_argument('amount', type=float, location=['json', 'form'])
+        self.reqparse.add_argument('get', type=str, location='json')
+        self.reqparse.add_argument('delete', type=str, location='json')
+        self.reqparse.add_argument('pay', type=str, location='json')
         super(PayOrderAPI, self).__init__()
 
     def post(self,id,pay):
@@ -135,7 +156,9 @@ class PayOrderAPI(Resource):
         args=request.get_json(force=True)
         order['message']= 'PAYMENT ACCEPTED'
         order['status']= 'PAID'
-        print "Paid"
+        order['links'][0]['get']='/orders/'+ id
+        order['links'][0]['pay']='/order/'+ id + '/pay'
+        order['links'][0]['delete']='/orders/'+ id
         orders.save(order)
         return {'order': marshal(order, order_fields)},201
 
@@ -152,6 +175,10 @@ class OrderAPI(Resource):
         self.reqparse.add_argument('name', type=str, location='json')
         self.reqparse.add_argument('milk', type=str, location='json')
         self.reqparse.add_argument('qty', type=int, location='json')
+        self.reqparse.add_argument('amount', type=float, location=['json', 'form'])
+        self.reqparse.add_argument('get', type=str, location='json')
+        self.reqparse.add_argument('delete', type=str, location='json')
+        self.reqparse.add_argument('pay', type=str, location='json')
         super(OrderAPI, self).__init__()
 
     def get(self, id):
@@ -162,6 +189,10 @@ class OrderAPI(Resource):
             abort(404)
         if len(order) == 0:
             abort(404)
+        
+        order['links'][0]['get']='/orders/'+ str(order['_id'])
+        order['links'][0]['pay']='/order/'+ str(order['_id']) + '/pay'
+        order['links'][0]['delete']='/orders/'+ str(order['_id'])
         return {'order': marshal(order, order_fields)}
 
     def put(self, id):
@@ -177,6 +208,9 @@ class OrderAPI(Resource):
             if v is not None:
                 order[k] = v
         orders.save(order)
+        order['links'][0]['get']='/orders/'+ str(order['_id'])
+        order['links'][0]['pay']='/order/'+ str(order['_id']) + '/pay'
+        order['links'][0]['delete']='/orders/'+ str(order['_id'])
         return {'order': marshal(order, order_fields)}
 
     def delete(self, id):
