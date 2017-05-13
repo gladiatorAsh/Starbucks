@@ -1,6 +1,6 @@
 #!flask/bin/python
 
-"""Alternative version of the ToDo RESTful server implemented using the
+"""RESTful server implemented using the
 Flask-RESTful extension."""
 
 from flask import Flask, request, jsonify, abort, make_response
@@ -12,6 +12,7 @@ from bson.objectid import ObjectId
 app = Flask(__name__, static_url_path="")
 api = Api(app)
 auth = HTTPBasicAuth()
+# Uncomment for local
 #client = MongoClient('localhost', 27017)
 client = MongoClient('ec2-52-53-152-19.us-west-1.compute.amazonaws.com', 27017)
 db = client['restbucks']
@@ -30,6 +31,7 @@ def unauthorized():
     # auth dialog
     return make_response(jsonify({'message': 'Unauthorized access'}), 403)
 '''
+Sample orders
 orders = [
     {
         'location': 1,
@@ -113,7 +115,6 @@ class OrderListAPI(Resource):
             }]
         }
 
-        #orders.append(order)
         order_id = orders.insert_one(order).inserted_id
         order_saved=orders.find_one({"_id":order_id})
         order_saved['links'][0]['get']='/orders/'+ str(order_id)
@@ -184,7 +185,7 @@ class OrderAPI(Resource):
     def get(self, id):
         #order = [order for order in orders if order['location'] == id]
         order = orders.find_one({"_id": ObjectId(id)})
-        print order
+        #print order
         if order is None:
             abort(404)
         if len(order) == 0:
@@ -222,7 +223,7 @@ class OrderAPI(Resource):
         orders.remove({"_id": ObjectId(id)})
         return {'result': True}
 
-
+#API endpoints
 api.add_resource(OrderListAPI, '/orders', endpoint='orders')
 api.add_resource(OrderAPI, '/orders/<string:id>', endpoint='order')
 api.add_resource(PayOrderAPI, '/orders/<string:id>/<string:pay>', endpoint='pay')
