@@ -117,7 +117,7 @@ class OrderListAPI(Resource):
         order_id = orders.insert_one(order).inserted_id
         order_saved=orders.find_one({"_id":order_id})
         order_saved['links'][0]['get']='/orders/'+ str(order_id)
-        order_saved['links'][0]['pay']='/order/'+ str(order_id) + '/pay'
+        order_saved['links'][0]['pay']='/orders/'+ str(order_id) + '/pay'
         order_saved['links'][0]['delete']='/orders/'+ str(order_id)
         order_json = marshal(order_saved, order_fields)
         return {'order': order_json }, 201
@@ -153,11 +153,11 @@ class PayOrderAPI(Resource):
             abort(412)
        
         #args = self.reqparse.parse_args()
-        args=request.get_json(force=True)
+        #args=request.get_json(force=True)
         order['message']= 'PAYMENT ACCEPTED'
         order['status']= 'PAID'
         order['links'][0]['get']='/orders/'+ id
-        order['links'][0]['pay']='/order/'+ id + '/pay'
+        order['links'][0]['pay']='/orders/'+ id + '/pay'
         order['links'][0]['delete']='/orders/'+ id
         orders.save(order)
         return {'order': marshal(order, order_fields)},201
@@ -191,7 +191,7 @@ class OrderAPI(Resource):
             abort(404)
         
         order['links'][0]['get']='/orders/'+ str(order['_id'])
-        order['links'][0]['pay']='/order/'+ str(order['_id']) + '/pay'
+        order['links'][0]['pay']='/orders/'+ str(order['_id']) + '/pay'
         order['links'][0]['delete']='/orders/'+ str(order['_id'])
         return {'order': marshal(order, order_fields)}
 
@@ -209,7 +209,7 @@ class OrderAPI(Resource):
                 order[k] = v
         orders.save(order)
         order['links'][0]['get']='/orders/'+ str(order['_id'])
-        order['links'][0]['pay']='/order/'+ str(order['_id']) + '/pay'
+        order['links'][0]['pay']='/orders/'+ str(order['_id']) + '/pay'
         order['links'][0]['delete']='/orders/'+ str(order['_id'])
         return {'order': marshal(order, order_fields)}
 
@@ -225,7 +225,7 @@ class OrderAPI(Resource):
 
 api.add_resource(OrderListAPI, '/orders', endpoint='orders')
 api.add_resource(OrderAPI, '/orders/<string:id>', endpoint='order')
-api.add_resource(PayOrderAPI, '/order/<string:id>/<string:pay>', endpoint='pay')
+api.add_resource(PayOrderAPI, '/orders/<string:id>/<string:pay>', endpoint='pay')
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', debug = False)
