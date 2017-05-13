@@ -15,7 +15,7 @@ B. Tenant 2
   
   4. All code run through [CodeClimate](https://codeclimate.com/github/gladiatorAsh/Starbucks) for Code Quality upkeep
   
-  5. ![Architecture](/Architecture.png)
+  5. ![Architecture](Architecture.png)
   
   6. Video of [Project Demo](https://youtube.com)
   
